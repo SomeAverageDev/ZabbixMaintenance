@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2022-02-14T20:01:39Z</date>
+    <groups>
+        <group>
+            <name>Templates</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>ZabbixMaintenance</template>
+            <name>ZabbixMaintenance</name>
+            <description>{&#13;
+&quot;author&quot;:&quot;gael.mondon&quot;,&#13;
+&quot;version&quot;:1.0,&#13;
+&quot;description&quot;:&quot;Handle dynamic blackout messages with zabbix trapper and associated media type&quot;,&#13;
+&quot;mtime&quot;:20220214&#13;
+}</description>
+            <groups>
+                <group>
+                    <name>Templates</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Blackout</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>ZabbixMaintenance</name>
+                    <type>TRAP</type>
+                    <key>ZabbixMaintenance</key>
+                    <delay>0</delay>
+                    <history>7d</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>Blackout</name>
+                        </application>
+                    </applications>
+                    <triggers>
+                        <trigger>
+                            <expression>{strlen()}&gt;0</expression>
+                            <recovery_mode>NONE</recovery_mode>
+                            <name>ZabbixMaintenance : {ITEM.VALUE}</name>
+                            <priority>INFO</priority>
+                            <description>{ITEM.VALUE}</description>
+                            <type>MULTIPLE</type>
+                            <manual_close>YES</manual_close>
+                            <tags>
+                                <tag>
+                                    <tag>CAP_AUTOCLOSE</tag>
+                                    <value>TRUE</value>
+                                </tag>
+                                <tag>
+                                    <tag>CAP_CATEGORY</tag>
+                                    <value>Blackout</value>
+                                </tag>
+                            </tags>
+                        </trigger>
+                    </triggers>
+                </item>
+            </items>
+        </template>
+    </templates>
+</zabbix_export>

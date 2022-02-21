@@ -1,4 +1,5 @@
 # ZabbixMaintenance
+** THIS IS STILL UNDER DEVELOPMENT **
 Zabbix Template and related media type in order to manage dynamic maintenance on Zabbix using a local agent trapper item
 You will have to create the related action as "Actions" cannot be imported.
 
@@ -21,7 +22,7 @@ Go to "Configuration > Actions" and click on "Create action" button.
 
 # Usage & Parameters
 ### General usage
-zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -s "Zabbix server" -k ZabbixMaintenance -o "<data>"
+zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k ZabbixMaintenance -o "<data>"
 
 ### Data message parameters
 #### Mandatory parameters
@@ -39,16 +40,20 @@ nodata, default maintenance is with data collection, use nodata to disable data 
 # Examples
 ### Creating a maintenance
 ```
-zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -s "Zabbix server" -k ZabbixMaintenance -o "action=create;comment=test maintenance B test-host2 with 2 tags and no data collection;host=test-host2;tag=SYSTEM:Linux;tag=tag1:contains1:2;nodata"
-zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -s "Zabbix server" -k ZabbixMaintenance -o "action=create;duration=30;comment=test maintenance D with group TEST_HGP and 1 tag equal;group=TEST_HGP;tag=SYSTEM:windows"
+zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k ZabbixMaintenance -o "action=create;comment=test maintenance B test-host2 with 2 tags and no data collection;host=test-host2;tag=SYSTEM:Linux;tag=tag1:contains1:2;nodata"
+zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k ZabbixMaintenance -o "action=create;duration=30;comment=test maintenance D with group TEST_HGP and 1 tag equal;group=TEST_HGP;tag=SYSTEM:windows"
 ```
 
 ### Deleting a maintenance
 ```
-zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -s "Zabbix server" -k ZabbixMaintenance -o "action=delete;group=TEST1_HGP"
+zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k ZabbixMaintenance -o "action=delete;group=TEST1_HGP"
 ```
 
 
 # Testing
 Tested on Zabbix version >= 5.0.4
 you can test various use cases with the [test file](Test/zabbix.maintenance.test.sh)
+
+# Debug
+Action logs will output in standard Zabbix server's logs in /var/log/zabbix/zabbix_server.log.
+All logs are prefixed with "ZabbixMaintenance" keyword.

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>5.0</version>
-    <date>2022-02-14T19:58:51Z</date>
+    <date>2022-02-21T19:33:39Z</date>
     <media_types>
         <media_type>
             <name>ZabbixMaintenance</name>
@@ -55,7 +55,7 @@
           ZabbixMaintenance.params.url += '/';&#13;
         }&#13;
       }&#13;
-      ZabbixMaintenance.dbg(4, 'setParams:params:'+ JSON.stringify(params));&#13;
+      ZabbixMaintenance.dbg(5, 'setParams:params:'+ JSON.stringify(params));&#13;
     },&#13;
 &#13;
     hashString: function(s) {&#13;
@@ -79,7 +79,7 @@
           data = JSON.stringify(data);&#13;
         }&#13;
 &#13;
-        ZabbixMaintenance.dbg(5, 'Sending request: ' + url + ((typeof data === 'string') ? (' ' + data) : ''));&#13;
+        ZabbixMaintenance.dbg(5, 'request: ' + url + ((typeof data === 'string') ? (' ' +data) : ''));&#13;
 &#13;
         response = req.Post(url, data);&#13;
 &#13;
@@ -118,7 +118,7 @@
           method: &quot;host.get&quot;,&#13;
           params: {&#13;
             output: 'hostid',&#13;
-            search: { 'name':ZabbixMaintenance.params.data.search.hosts},&#13;
+            search: { name : ZabbixMaintenance.params.data.search.hosts},&#13;
             searchWildcardsEnabled: 'true'&#13;
           },&#13;
         };&#13;
@@ -132,7 +132,7 @@
             ZabbixMaintenance.params.data.hosts.push(result.response.result[i].hostid);&#13;
           }&#13;
         } else {&#13;
-          ZabbixMaintenance.dbg(3, 'getHostsIds:result:No result for search:'+ZabbixMaintenance.params.data.search.hosts);&#13;
+          throw 'create:result:getHostsIds:result:No result for search:'+JSON.stringify(ZabbixMaintenance.params.data.search.hosts);&#13;
         }&#13;
         return n&#13;
       } catch (error) {&#13;
@@ -161,7 +161,7 @@
             ZabbixMaintenance.params.data.groups.push(result.response.result[i].groupid);&#13;
           }&#13;
         } else {&#13;
-          ZabbixMaintenance.dbg(3, 'getGroupsIds:result:No result for search:'+JSON.stringify(ZabbixMaintenance.params.data.search.groups));&#13;
+          throw 'getGroupsIds:result:getGroupsIds:result:No result for search:'+JSON.stringify(ZabbixMaintenance.params.data.search.groups);&#13;
         }&#13;
         return n&#13;
       } catch (error) {&#13;
@@ -184,7 +184,6 @@
         );&#13;
         ZabbixMaintenance.dbg(4, 'login:result:'+JSON.stringify(result));&#13;
         ZabbixMaintenance.params.auth = result.response.result&#13;
-        //ZabbixMaintenance.dbg(4,'ZabbixMaintenance.params.auth:'+ZabbixMaintenance.params.auth);&#13;
         return true&#13;
       } catch (error) {&#13;
         throw error&#13;
@@ -219,6 +218,7 @@
         }&#13;
         if (ZabbixMaintenance.params.data.tag.length &gt; 0) {&#13;
           payload.params.tags = ZabbixMaintenance.params.data.tag;&#13;
+          delete params.data.tag;&#13;
         }&#13;
         result = ZabbixMaintenance.request('/', payload);&#13;
         ZabbixMaintenance.dbg(4, 'create:result:'+JSON.stringify(result));&#13;
@@ -328,53 +328,57 @@ try {&#13;
     params.prefix = 'ZM';&#13;
     params.data.tag = [];&#13;
     params.data.search = { hosts: [], groups: []};&#13;
-    params.data.hosts = [ params.host ];&#13;
+//    params.data.hosts = [ params.host ];&#13;
     params.data.duration = 3600;&#13;
-    params.data.maintenance_type = 0; // with datacollection&#13;
+    params.data.maintenance_type = 0; // 0 - (default) WITH data collection;&#13;
 &#13;
     data.forEach(function(item){&#13;
       var tmp = item.split('=');&#13;
       if (tmp.length === 2) {&#13;
         if (tmp[0] === 'host') {&#13;
-/*          tmp[1].split(',').forEach (function(h){&#13;
-            params.data.search.hosts.push ( {'name': h} );&#13;
-          });&#13;
-          */&#13;
+//          tmp[1].split(',').forEach (function(h){&#13;
+//            params.data.search.hosts.push ( {'name': h} );&#13;
+//          });&#13;
           params.md5 = params.md5+tmp[1];&#13;
-          params.data.search.hosts = tmp[1].split(',');&#13;
+          params.data.search.hosts = tmp[1];&#13;
           foundSearch=0;&#13;
         }&#13;
         else if (tmp[0] === 'group') {&#13;
           params.md5 = params.md5+tmp[1];&#13;
-          params.data.search.groups = tmp[1].split(',');&#13;
+          params.data.search.groups = tmp[1];&#13;
           foundSearch=0;&#13;
-        }&#13;
-        else if (tmp[0] === 'noda') {&#13;
-          params.data.maintenance_type = 1;&#13;
         }&#13;
         else if (tmp[0] === 'tag') {&#13;
           params.md5 = params.md5+tmp[1];&#13;
           var t = tmp[1].split(':');&#13;
           if (t.length === 2) {&#13;
-            params.data.tag.push({tag:t[0], value:t[1], operator:0});&#13;
+            params.data.tag.push({tag:t[0], value:t[1], operator:0}); //equals&#13;
           } else if (t.length === 3) {&#13;
-            params.data.tag.push({tag:t[0], value:t[1]});&#13;
+            params.data.tag.push({tag:t[0], value:t[1], operator:parseInt(t[2])});&#13;
+          } else {&#13;
+             ZabbixMaintenance.dbg(3, 'error: invalid tag value ('+item+')');&#13;
           }&#13;
         }&#13;
         else {&#13;
           if (tmp[0] === 'duration') {&#13;
-            tmp[1] = tmp[1]*60;&#13;
+          tmp[1] = tmp[1]*60;&#13;
           }&#13;
           params.data[tmp[0]] = tmp[1];&#13;
         }&#13;
+      }&#13;
+      else if (tmp[0] === 'nodata') {&#13;
+        params.data.maintenance_type = 1;&#13;
       } else {&#13;
-        ZabbixMaintenance.dbg(4, 'error: data value is not valid ('+item+')');&#13;
+        ZabbixMaintenance.dbg(3, 'error: data value is not valid ('+item+')');&#13;
       }&#13;
     });&#13;
     if (params.data.comment !== 'undefined') {&#13;
       params.data.comment = params.data.comment + ' for ' + Math.round(params.data.duration/60) + 'm';&#13;
     } else {&#13;
       params.data.comment = 'ZabbixMaintenance for ' + Math.round(params.data.duration/60) + 'm';&#13;
+    }&#13;
+    if (params.data.maintenance_type === 1) {&#13;
+      params.data.tag = [];&#13;
     }&#13;
     delete params.fulldata;&#13;
 &#13;
@@ -397,11 +401,11 @@ try {&#13;
       } else if (params.data.search.hosts.length &gt; 0) {&#13;
         foundSearch=ZabbixMaintenance.getHostsIds();&#13;
       } else {&#13;
-         throw 'No host or host group selected';&#13;
+        ZabbixMaintenance.params.data.hosts = [ params.host ];&#13;
+        throw 'No host or host group selected';&#13;
       }&#13;
     }&#13;
 &#13;
-    ZabbixMaintenance.dbg(4, 'params:'+JSON.stringify( params ));&#13;
     if (ZabbixMaintenance.params.data.action === 'create' ) {&#13;
       mid = ZabbixMaintenance.create();&#13;
       ZabbixMaintenance.dbg(3, 'New maintenance created :'+ mid);&#13;
@@ -413,11 +417,11 @@ try {&#13;
        throw 'Search for host or hostgroup return no value.';&#13;
     }&#13;
     ZabbixMaintenance.logout();&#13;
-    ZabbixMaintenance.dbg(4, 'actionResult:'+ JSON.stringify(actionResult));&#13;
+    ZabbixMaintenance.dbg(5, 'actionResult:'+ JSON.stringify(actionResult));&#13;
     return JSON.stringify(actionResult);&#13;
 }&#13;
 catch (error) {&#13;
-    ZabbixMaintenance.dbg(4, 'notification failed: ' + error);&#13;
+    ZabbixMaintenance.dbg(3, 'notification failed: ' + error);&#13;
     throw 'Sending failed: ' + error + '.';&#13;
     return 'ERROR:' + error;&#13;
 }</script>
